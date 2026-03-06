@@ -208,9 +208,32 @@ Alerts are side effects of status change — not separate API calls. This reflec
 Prevents duplicate data at database level, not just application level.
 
 ---
+## 📸 API Screenshots
+
+### Create Flight
+![Create Flight](create-flight.png)
+
+### Create Passenger
+![Create Passenger](create-passenger.png)
+
+### Create Booking
+![Create Booking](create-booking.png)
+
+### Get Flights
+![Get Flights](get-flights.png)
+
+### Get Bookings
+![Get Bookings](get-bookings.png)
+
+### Update Flight Status
+![Update Status](update-status.png)
+
+---
 
 ## 👩‍💻 Author
 
 **Khushi Sharma**
 - GitHub: [@sharmakhushi18](https://github.com/sharmakhushi18)
 - Final Year ECE | LNCT Bhopal
+
+
