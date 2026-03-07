@@ -208,6 +208,10 @@ Alerts are side effects of status change — not separate API calls. This reflec
 Prevents duplicate data at database level, not just application level.
 
 ---
+
+## 🖥️ Frontend Repository
+[flight-delay-frontend](https://github.com/sharmakhushi18/flight-delay-frontend) — React Dashboard
+
 ## 📸 API Screenshots
 
 ### Create Flight
