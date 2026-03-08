@@ -36,12 +36,10 @@ public class FlightController {
     public ResponseEntity<Flight> updateStatus(
             @PathVariable Long id,
             @RequestBody Map<String, Object> payload) {
-
         FlightStatus status = FlightStatus.valueOf(
                 payload.get("status").toString());
         int delayMinutes = payload.containsKey("delayMinutes") ?
                 (int) payload.get("delayMinutes") : 0;
-
         return ResponseEntity.ok(
                 flightService.updateFlightStatus(id, status, delayMinutes));
     }
