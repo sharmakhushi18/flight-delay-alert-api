@@ -5,6 +5,9 @@ A **real-world backend system** built with Spring Boot that automatically notifi
 > Built by **Khushi Sharma** | Java Backend Developer | LNCT Bhopal
 
 ---
+## 🌐 Live Demo
+- **Frontend:** https://flight-delay-frontend-seven.vercel.app
+- **Backend API:** https://flight-delay-alert-api.onrender.com
 
 ## 🚀 What This Project Does
 
