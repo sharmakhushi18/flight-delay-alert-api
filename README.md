@@ -1,17 +1,49 @@
 # ✈️ Flight Delay Alert API
 
-A **real-world backend system** built with Spring Boot that automatically notifies passengers when their flight is delayed or cancelled.
+<div align="center">
 
-> Built by **Khushi Sharma** | Java Backend Developer | LNCT Bhopal
+![Java](https://img.shields.io/badge/Java-17+-ED8B00?style=for-the-badge&logo=java&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Deployed-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Render](https://img.shields.io/badge/Render-Live-46E3B7?style=for-the-badge&logo=render&logoColor=white)
+
+**A real-world backend system that automatically notifies passengers when their flight is delayed or cancelled — without any manual intervention.**
+
+[Live Backend](https://flight-delay-alert-api.onrender.com) · [Live Frontend](https://flight-delay-frontend-seven.vercel.app) · [Report Bug](https://github.com/sharmakhushi18/flight-delay-alert-api/issues)
+
+</div>
 
 ---
+
 ## 🌐 Live Demo
-- **Frontend:** https://flight-delay-frontend-seven.vercel.app
-- **Backend API:** https://flight-delay-alert-api.onrender.com
+
+| Service | URL |
+|---|---|
+| Backend API | https://flight-delay-alert-api.onrender.com |
+| Frontend Dashboard | https://flight-delay-frontend-seven.vercel.app |
+
+---
+
+## 📌 What Is This?
+
+A Spring Boot REST API that automatically generates passenger alerts when a flight status changes to `DELAYED` or `CANCELLED` — no manual intervention required. Built to simulate how real airline notification systems work internally.
+
+---
+
+## 💡 Why I Built This
+
+Flight delays affect millions of passengers every day — but most airlines still rely on manual announcements or delayed SMS updates.
+
+I wanted to build a system that **automatically detects status changes and instantly notifies every affected passenger** — no manual work, no delay in communication.
+
+This project taught me how real-world **event-driven systems** work — where one action (status update) triggers a chain of automated responses (alert generation for all booked passengers).
+
+---
 
 ## 🚀 What This Project Does
 
-When a flight status changes to **DELAYED** or **CANCELLED**, the system automatically generates alert notifications for all passengers who have booked that flight — without any manual intervention.
+When a flight status changes to `DELAYED` or `CANCELLED`, the system automatically generates alert notifications for all passengers who have booked that flight.
 
 ```
 Admin updates flight status
@@ -28,7 +60,7 @@ Passengers can check their alerts anytime
 ## 🛠️ Tech Stack
 
 | Technology | Usage |
-|------------|-------|
+|---|---|
 | Java 17+ | Core language |
 | Spring Boot 3.5 | Backend framework |
 | Spring Data JPA | Database ORM |
@@ -36,6 +68,8 @@ Passengers can check their alerts anytime
 | Hibernate | ORM implementation |
 | Lombok | Boilerplate reduction |
 | Maven | Build tool |
+| Docker | Containerization |
+| Render | Cloud deployment |
 
 ---
 
@@ -52,6 +86,11 @@ Client (Postman / Frontend)
         ↓
    MySQL Database         ← Persistent storage
 ```
+
+**Each layer has a single responsibility:**
+- Controller handles HTTP only — no business logic
+- Service handles all decisions and rules
+- Repository handles all database queries
 
 ---
 
@@ -84,17 +123,17 @@ alert_notifications
 ## 🔄 Flight Status — State Machine
 
 ```
-ON_TIME ──→ BOARDING
-ON_TIME ──→ DELAYED
-ON_TIME ──→ CANCELLED
-DELAYED ──→ BOARDING
-DELAYED ──→ CANCELLED
+ON_TIME  ──→ BOARDING
+ON_TIME  ──→ DELAYED
+ON_TIME  ──→ CANCELLED
+DELAYED  ──→ BOARDING
+DELAYED  ──→ CANCELLED
 BOARDING ──→ DEPARTED
-DEPARTED ──→ ❌ (no transition)
-CANCELLED ──→ ❌ (no transition)
+DEPARTED ──→ ❌ (terminal state)
+CANCELLED──→ ❌ (terminal state)
 ```
 
-Invalid transitions are **rejected at service layer**.
+Invalid transitions are rejected at the service layer — the system never enters an inconsistent state.
 
 ---
 
@@ -102,36 +141,36 @@ Invalid transitions are **rejected at service layer**.
 
 ### Flights
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/flights` | Add a new flight |
-| GET | `/flights` | Get all flights |
-| GET | `/flights/{id}/status` | Get flight status |
-| PUT | `/flights/{id}/status` | Update flight status |
+|---|---|---|
+| POST | /flights | Add a new flight |
+| GET | /flights | Get all flights |
+| GET | /flights/{id}/status | Get flight status |
+| PUT | /flights/{id}/status | Update flight status |
 
 ### Passengers
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/passengers` | Register a passenger |
-| GET | `/passengers` | Get all passengers |
+|---|---|---|
+| POST | /passengers | Register a passenger |
+| GET | /passengers | Get all passengers |
 
 ### Bookings
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/bookings` | Book a flight |
-| PUT | `/bookings/{id}/cancel` | Cancel a booking |
-| GET | `/bookings/passenger/{id}` | Get passenger bookings |
+|---|---|---|
+| POST | /bookings | Book a flight |
+| PUT | /bookings/{id}/cancel | Cancel a booking |
+| GET | /bookings/passenger/{id} | Get passenger bookings |
 
 ### Alerts
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/alerts/subscribe` | Subscribe for alerts |
-| GET | `/alerts/{passengerId}` | Get passenger alerts |
+|---|---|---|
+| POST | /alerts/subscribe | Subscribe for alerts |
+| GET | /alerts/{passengerId} | Get passenger alerts |
 
 ---
 
 ## 📬 Sample API Requests
 
-### Create Flight
+**Create Flight**
 ```json
 POST /flights
 {
@@ -146,7 +185,7 @@ POST /flights
 }
 ```
 
-### Book a Flight
+**Book a Flight**
 ```json
 POST /bookings
 {
@@ -156,7 +195,7 @@ POST /bookings
 }
 ```
 
-### Update Flight Status (triggers alerts automatically)
+**Update Flight Status — triggers alerts automatically**
 ```json
 PUT /flights/1/status
 {
@@ -169,12 +208,12 @@ PUT /flights/1/status
 
 ## ⚙️ How to Run Locally
 
-### Prerequisites
+**Prerequisites**
 - Java 17+
 - MySQL 8.0
 - Maven
 
-### Steps
+**Steps**
 
 ```bash
 # 1. Clone the repository
@@ -199,48 +238,34 @@ Server starts at: `http://localhost:8080`
 ## 💡 Key Design Decisions
 
 **Why `@Transactional` on status update?**
-Seat decrement, status change, and alert generation must succeed together or rollback together.
+Seat decrement, status change, and alert generation must all succeed together — or all rollback together. This ensures data consistency even if the server crashes mid-operation.
 
 **Why Enum for FlightStatus?**
-Prevents invalid string values and enables compile-time safety for state transitions.
+Prevents invalid string values at compile time. The state machine logic becomes clean and readable — invalid transitions are caught before they reach the database.
 
 **Why auto-trigger alerts?**
-Alerts are side effects of status change — not separate API calls. This reflects real-world event-driven behavior.
+Alerts are a side effect of status change — not a separate manual step. This reflects real-world event-driven behavior where one action automatically triggers downstream effects.
 
 **Why unique constraints on flightNumber, email, passport?**
-Prevents duplicate data at database level, not just application level.
+Duplicate prevention must happen at the database level — not just the application level. If two requests arrive simultaneously, only the database constraint guarantees one will fail cleanly.
 
 ---
 
-## 🖥️ Frontend Repository
-[flight-delay-frontend](https://github.com/sharmakhushi18/flight-delay-frontend) — React Dashboard
+## 🔮 Future Improvements
 
-## 📸 API Screenshots
-
-### Create Flight
-![Create Flight](create-flight.png)
-
-### Create Passenger
-![Create Passenger](create-passenger.png)
-
-### Create Booking
-![Create Booking](create-booking.png)
-
-### Get Flights
-![Get Flights](get-flights.png)
-
-### Get Bookings
-![Get Bookings](get-bookings.png)
-
-### Update Flight Status
-![Update Status](update-status.png)
+- [ ] JWT Authentication — secure all endpoints with role-based access (Admin / Passenger)
+- [ ] Real Email Notifications — send actual emails via JavaMailSender when alerts are generated
+- [ ] WebSocket Support — push real-time alerts to frontend without polling
+- [ ] Pagination — add pagination to all list endpoints for large datasets
+- [ ] Swagger UI — interactive API documentation for easier testing
+- [ ] Rate Limiting — prevent API abuse with Redis-based request throttling
 
 ---
 
 ## 👩‍💻 Author
 
 **Khushi Sharma**
-- GitHub: [@sharmakhushi18](https://github.com/sharmakhushi18)
-- Final Year ECE | LNCT Bhopal
 
+Final Year ECE | LNCT Bhopal | Java Backend Developer
 
+[![GitHub](https://img.shields.io/badge/GitHub-sharmakhushi18-181717?style=flat&logo=github)](https://github.com/sharmakhushi18)
