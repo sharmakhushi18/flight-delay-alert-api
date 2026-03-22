@@ -260,6 +260,26 @@ Duplicate prevention must happen at the database level — not just the applicat
 - [ ] Swagger UI — interactive API documentation for easier testing
 - [ ] Rate Limiting — prevent API abuse with Redis-based request throttling
 
+
+## 📸 API Screenshots
+
+**Create Flight**
+![Create Flight](create-flight.png)
+
+**Create Passenger**
+![Create Passenger](create-passenger.png)
+
+**Create Booking**
+![Create Booking](create-booking.png)
+
+**Get Flights**
+![Get Flights](get-flights.png)
+
+**Get Bookings**
+![Get Bookings](get-bookings.png)
+
+**Update Flight Status**
+![Update Status](update-status.png)
 ---
 
 ## 👩‍💻 Author
