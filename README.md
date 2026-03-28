@@ -10,7 +10,7 @@
 
 **A real-world backend system that automatically notifies passengers when their flight is delayed or cancelled — without any manual intervention.**
 
-[Live Backend](https://flight-delay-alert-api.onrender.com) · [Live Frontend](https://flight-delay-frontend-seven.vercel.app) · [Report Bug](https://github.com/sharmakhushi18/flight-delay-alert-api/issues)
+[Live Backend](https://flight-delay-alert-api.onrender.com/flights) · [Live Frontend](https://flight-delay-frontend-seven.vercel.app) · [Report Bug](https://github.com/sharmakhushi18/flight-delay-alert-api/issues)
 
 </div>
 
