@@ -14,6 +14,7 @@ public class FlightService {
     private final FlightRepository flightRepository;
     private final AlertRepository alertRepository;
     private final BookingRepository bookingRepository;
+    private final EmailService emailService;
 
     public List<Flight> getAllFlights() {
         return flightRepository.findAll();
@@ -79,6 +80,14 @@ public class FlightService {
                     (flight.getStatus() == FlightStatus.DELAYED ?
                             " by " + flight.getDelayMinutes() + " minutes." : "."));
             alertRepository.save(alert);
+
+            // Email send karo passenger ko
+            emailService.sendAlertEmail(
+                    booking.getPassenger().getEmail(),
+                    booking.getPassenger().getName(),
+                    flight.getFlightNumber(),
+                    flight.getStatus().toString()
+            );
         });
     }
 }
