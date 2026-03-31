@@ -21,7 +21,7 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (flightRepository.count() > 0) {
-            System.out.println("⏭️ Flights already exist, skipping...");
+            System.out.println("Flights already exist, skipping...");
             return;
         }
 
@@ -41,7 +41,7 @@ public class DataSeeder implements CommandLineRunner {
         );
 
         flightRepository.saveAll(flights);
-        System.out.println("✅ Seeded 10 flights successfully!");
+        System.out.println("Seeded 10 flights successfully!");
     }
 
     private Flight createFlight(String num, String src, String dest,
