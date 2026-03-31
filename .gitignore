@@ -34,3 +34,6 @@ build/
 
 application-local.properties
 .env
+
+# Secret config — never push to GitHub
+src/main/resources/application-dev.properties
