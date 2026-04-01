@@ -81,13 +81,17 @@ public class FlightService {
                             " by " + flight.getDelayMinutes() + " minutes." : "."));
             alertRepository.save(alert);
 
-            // Email send karo passenger ko
-            emailService.sendAlertEmail(
-                    booking.getPassenger().getEmail(),
-                    booking.getPassenger().getName(),
-                    flight.getFlightNumber(),
-                    flight.getStatus().toString()
-            );
+            try {
+                emailService.sendAlertEmail(
+                        booking.getPassenger().getEmail(),
+                        booking.getPassenger().getName(),
+                        flight.getFlightNumber(),
+                        flight.getStatus().toString()
+                );
+            } catch (Exception e) {
+                System.err.println("Email failed for: " +
+                        booking.getPassenger().getEmail() + " — " + e.getMessage());
+            }
         });
     }
 }
