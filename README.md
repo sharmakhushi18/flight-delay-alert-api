@@ -4,11 +4,11 @@
 
 ![Java](https://img.shields.io/badge/Java-17+-ED8B00?style=for-the-badge&logo=java&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Deployed-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Render](https://img.shields.io/badge/Render-Live-46E3B7?style=for-the-badge&logo=render&logoColor=white)
 
-**A real-world backend system that automatically notifies passengers when their flight is delayed or cancelled — without any manual intervention.**
+**A real-world backend system that automatically notifies passengers when their flight is delayed or cancelled — with real email alerts.**
 
 [Live Backend](https://flight-delay-alert-api.onrender.com/flights) · [Live Frontend](https://flight-delay-frontend-seven.vercel.app) · [Report Bug](https://github.com/sharmakhushi18/flight-delay-alert-api/issues)
 
@@ -20,14 +20,14 @@
 
 | Service | URL |
 |---|---|
-| Backend API | https://flight-delay-alert-api.onrender.com |
+| Backend API | https://flight-delay-alert-api.onrender.com/flights |
 | Frontend Dashboard | https://flight-delay-frontend-seven.vercel.app |
 
 ---
 
 ## 📌 What Is This?
 
-A Spring Boot REST API that automatically generates passenger alerts when a flight status changes to `DELAYED` or `CANCELLED` — no manual intervention required. Built to simulate how real airline notification systems work internally.
+A Spring Boot REST API that automatically generates passenger alerts and sends real email notifications when a flight status changes to `DELAYED` or `CANCELLED` — no manual intervention required. Built to simulate how real airline notification systems work internally.
 
 ---
 
@@ -37,13 +37,15 @@ Flight delays affect millions of passengers every day — but most airlines stil
 
 I wanted to build a system that **automatically detects status changes and instantly notifies every affected passenger** — no manual work, no delay in communication.
 
-This project taught me how real-world **event-driven systems** work — where one action (status update) triggers a chain of automated responses (alert generation for all booked passengers).
+This project taught me how real-world **event-driven systems** work — where one action (status update) triggers a chain of automated responses (alert generation + real email notifications for all booked passengers).
 
 ---
 
 ## 🚀 What This Project Does
 
-When a flight status changes to `DELAYED` or `CANCELLED`, the system automatically generates alert notifications for all passengers who have booked that flight.
+When a flight status changes to `DELAYED` or `CANCELLED`, the system automatically:
+1. Generates alert notifications in DB for all booked passengers
+2. Sends real email notifications to each passenger instantly
 
 ```
 Admin updates flight status
@@ -51,6 +53,8 @@ Admin updates flight status
 System detects DELAYED / CANCELLED
         ↓
 Alerts auto-generated for all booked passengers
+        ↓
+Real email sent to each passenger instantly
         ↓
 Passengers can check their alerts anytime
 ```
@@ -64,8 +68,9 @@ Passengers can check their alerts anytime
 | Java 17+ | Core language |
 | Spring Boot 3.5 | Backend framework |
 | Spring Data JPA | Database ORM |
-| MySQL 8.0 | Relational database |
+| PostgreSQL (Neon) | Cloud relational database |
 | Hibernate | ORM implementation |
+| JavaMailSender | Real email notifications |
 | Lombok | Boilerplate reduction |
 | Maven | Build tool |
 | Docker | Containerization |
@@ -84,7 +89,7 @@ Client (Postman / Frontend)
         ↓
    Repository Layer       ← Database operations (JPA)
         ↓
-   MySQL Database         ← Persistent storage
+   PostgreSQL Database    ← Persistent storage (Neon Cloud)
 ```
 
 **Each layer has a single responsibility:**
@@ -163,7 +168,6 @@ Invalid transitions are rejected at the service layer — the system never enter
 ### Alerts
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | /alerts/subscribe | Subscribe for alerts |
 | GET | /alerts/{passengerId} | Get passenger alerts |
 
 ---
@@ -195,7 +199,7 @@ POST /bookings
 }
 ```
 
-**Update Flight Status — triggers alerts automatically**
+**Update Flight Status — triggers alerts + email automatically**
 ```json
 PUT /flights/1/status
 {
@@ -210,7 +214,7 @@ PUT /flights/1/status
 
 **Prerequisites**
 - Java 17+
-- MySQL 8.0
+- PostgreSQL or Neon DB account
 - Maven
 
 **Steps**
@@ -219,15 +223,14 @@ PUT /flights/1/status
 # 1. Clone the repository
 git clone https://github.com/sharmakhushi18/flight-delay-alert-api.git
 
-# 2. Create MySQL database
-mysql -u root -p
-CREATE DATABASE flight_delay_db;
+# 2. Set environment variables in application.properties
+SPRING_DATASOURCE_URL=your_postgresql_url
+SPRING_DATASOURCE_USERNAME=your_username
+SPRING_DATASOURCE_PASSWORD=your_password
+SPRING_MAIL_USERNAME=your_gmail
+SPRING_MAIL_PASSWORD=your_gmail_app_password
 
-# 3. Update application.properties
-spring.datasource.username=root
-spring.datasource.password=your_password
-
-# 4. Run the application
+# 3. Run the application
 mvn spring-boot:run
 ```
 
@@ -238,13 +241,16 @@ Server starts at: `http://localhost:8080`
 ## 💡 Key Design Decisions
 
 **Why `@Transactional` on status update?**
-Seat decrement, status change, and alert generation must all succeed together — or all rollback together. This ensures data consistency even if the server crashes mid-operation.
+Status change and alert generation must all succeed together — or rollback together. This ensures data consistency even if the server crashes mid-operation.
 
 **Why Enum for FlightStatus?**
 Prevents invalid string values at compile time. The state machine logic becomes clean and readable — invalid transitions are caught before they reach the database.
 
-**Why auto-trigger alerts?**
-Alerts are a side effect of status change — not a separate manual step. This reflects real-world event-driven behavior where one action automatically triggers downstream effects.
+**Why auto-trigger alerts + email?**
+Alerts and emails are side effects of status change — not separate manual steps. This reflects real-world event-driven behavior where one action automatically triggers downstream effects.
+
+**Why try-catch around email sending?**
+Email failure should never prevent alert from being saved in DB. Alert persistence is guaranteed even if SMTP fails temporarily.
 
 **Why unique constraints on flightNumber, email, passport?**
 Duplicate prevention must happen at the database level — not just the application level. If two requests arrive simultaneously, only the database constraint guarantees one will fail cleanly.
@@ -254,7 +260,6 @@ Duplicate prevention must happen at the database level — not just the applicat
 ## 🔮 Future Improvements
 
 - [ ] JWT Authentication — secure all endpoints with role-based access (Admin / Passenger)
-- [ ] Real Email Notifications — send actual emails via JavaMailSender when alerts are generated
 - [ ] WebSocket Support — push real-time alerts to frontend without polling
 - [ ] Pagination — add pagination to all list endpoints for large datasets
 - [ ] Swagger UI — interactive API documentation for easier testing
