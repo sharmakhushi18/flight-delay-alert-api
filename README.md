@@ -7,6 +7,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Deployed-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Render](https://img.shields.io/badge/Render-Live-46E3B7?style=for-the-badge&logo=render&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-Secured-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 
 **A real-world backend system that automatically notifies passengers when their flight is delayed or cancelled — with real email alerts.**
 
@@ -28,6 +29,8 @@
 ## 📌 What Is This?
 
 A Spring Boot REST API that automatically generates passenger alerts and sends real email notifications when a flight status changes to `DELAYED` or `CANCELLED` — no manual intervention required. Built to simulate how real airline notification systems work internally.
+
+Now secured with **JWT Authentication** — all endpoints are protected and require a valid token.
 
 ---
 
@@ -67,6 +70,7 @@ Passengers can check their alerts anytime
 |---|---|
 | Java 17+ | Core language |
 | Spring Boot 3.5 | Backend framework |
+| Spring Security + JWT | Authentication & Authorization |
 | Spring Data JPA | Database ORM |
 | PostgreSQL (Neon) | Cloud relational database |
 | Hibernate | ORM implementation |
@@ -83,16 +87,19 @@ Passengers can check their alerts anytime
 ```
 Client (Postman / Frontend)
         ↓
-   Controller Layer       ← HTTP request handling
+   JWT Filter              ← Token validation on every request
         ↓
-   Service Layer          ← Business logic & validation
+   Controller Layer        ← HTTP request handling
         ↓
-   Repository Layer       ← Database operations (JPA)
+   Service Layer           ← Business logic & validation
         ↓
-   PostgreSQL Database    ← Persistent storage (Neon Cloud)
+   Repository Layer        ← Database operations (JPA)
+        ↓
+   PostgreSQL Database     ← Persistent storage (Neon Cloud)
 ```
 
 **Each layer has a single responsibility:**
+- JWT Filter validates token before request reaches controller
 - Controller handles HTTP only — no business logic
 - Service handles all decisions and rules
 - Repository handles all database queries
@@ -102,6 +109,11 @@ Client (Postman / Frontend)
 ## 🗄️ Database Schema
 
 ```
+users
+├── id, username (unique)
+├── password (BCrypt encrypted)
+└── role (USER / ADMIN)
+
 flights
 ├── id, flightNumber (unique), source, destination
 ├── departureTime, totalSeats, availableSeats
@@ -144,7 +156,13 @@ Invalid transitions are rejected at the service layer — the system never enter
 
 ## 📡 API Endpoints
 
-### Flights
+### Authentication (Public)
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | /auth/register | Register a new user |
+| POST | /auth/login | Login and get JWT token |
+
+### Flights (Protected — Token Required)
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | /flights | Add a new flight |
@@ -152,20 +170,20 @@ Invalid transitions are rejected at the service layer — the system never enter
 | GET | /flights/{id}/status | Get flight status |
 | PUT | /flights/{id}/status | Update flight status |
 
-### Passengers
+### Passengers (Protected — Token Required)
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | /passengers | Register a passenger |
 | GET | /passengers | Get all passengers |
 
-### Bookings
+### Bookings (Protected — Token Required)
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | /bookings | Book a flight |
 | PUT | /bookings/{id}/cancel | Cancel a booking |
 | GET | /bookings/passenger/{id} | Get passenger bookings |
 
-### Alerts
+### Alerts (Protected — Token Required)
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | /alerts/{passengerId} | Get passenger alerts |
@@ -173,6 +191,35 @@ Invalid transitions are rejected at the service layer — the system never enter
 ---
 
 ## 📬 Sample API Requests
+
+**Step 1 — Register**
+```json
+POST /auth/register
+{
+  "username": "khushi",
+  "password": "khushi123"
+}
+```
+
+**Step 2 — Login (get token)**
+```json
+POST /auth/login
+{
+  "username": "khushi",
+  "password": "khushi123"
+}
+```
+Response:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+**Step 3 — Use token in all requests**
+```
+Authorization: Bearer <your_token>
+```
 
 **Create Flight**
 ```json
@@ -229,6 +276,8 @@ SPRING_DATASOURCE_USERNAME=your_username
 SPRING_DATASOURCE_PASSWORD=your_password
 SPRING_MAIL_USERNAME=your_gmail
 SPRING_MAIL_PASSWORD=your_gmail_app_password
+JWT_SECRET=your_secret_key
+JWT_EXPIRATION=86400000
 
 # 3. Run the application
 mvn spring-boot:run
@@ -239,6 +288,12 @@ Server starts at: `http://localhost:8080`
 ---
 
 ## 💡 Key Design Decisions
+
+**Why JWT Authentication?**
+Stateless authentication — no session stored on server. Every request carries a self-contained token with user identity and role. Perfect for REST APIs and scalable deployments.
+
+**Why BCrypt for passwords?**
+BCrypt is a one-way hash — passwords are never stored in plain text. Even if the database is compromised, passwords remain secure.
 
 **Why `@Transactional` on status update?**
 Status change and alert generation must all succeed together — or rollback together. This ensures data consistency even if the server crashes mid-operation.
@@ -259,7 +314,7 @@ Duplicate prevention must happen at the database level — not just the applicat
 
 ## 🔮 Future Improvements
 
-- [ ] JWT Authentication — secure all endpoints with role-based access (Admin / Passenger)
+- [x] ~~JWT Authentication — secure all endpoints with role-based access~~ ✅ **Completed**
 - [ ] WebSocket Support — push real-time alerts to frontend without polling
 - [ ] Pagination — add pagination to all list endpoints for large datasets
 - [ ] Swagger UI — interactive API documentation for easier testing
