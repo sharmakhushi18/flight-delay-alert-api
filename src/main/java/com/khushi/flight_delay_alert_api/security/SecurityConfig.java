@@ -3,6 +3,7 @@ package com.khushi.flight_delay_alert_api.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,7 +30,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.GET, "/flights").permitAll()      // ✅ Public
+                        .requestMatchers(HttpMethod.GET, "/flights/**").permitAll()   // ✅ Public
+                        .requestMatchers(HttpMethod.GET, "/passengers").permitAll()   // ✅ Public
+                        .requestMatchers(HttpMethod.GET, "/alerts/**").permitAll()    // ✅ Public
+                        .anyRequest().authenticated()                                 // 🔒 Rest protected
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -38,7 +43,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // ✅ This was missing!
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
