@@ -12,7 +12,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @NoArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
-@Table(name = "bookings")
+@Table(
+        name = "bookings",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_flight_seat",
+                        columnNames = {"flight_id", "seatNumber"}  // ✅ Same seat same flight = blocked!
+                )
+        }
+)
 public class Booking {
 
     @Id

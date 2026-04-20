@@ -3,6 +3,7 @@ package com.khushi.flight_delay_alert_api.service;
 import com.khushi.flight_delay_alert_api.model.*;
 import com.khushi.flight_delay_alert_api.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -18,7 +19,8 @@ public class BookingService {
     @Transactional
     public Booking bookFlight(Long flightId, Long passengerId, String seatNumber) {
 
-        Flight flight = flightRepository.findById(flightId)
+        // ✅ Pessimistic Lock — sirf ek user ek time pe book kar sakta hai
+        Flight flight = flightRepository.findByIdWithLock(flightId)
                 .orElseThrow(() -> new RuntimeException("Flight not found!"));
 
         Passenger passenger = passengerRepository.findById(passengerId)
@@ -45,7 +47,12 @@ public class BookingService {
         booking.setPassenger(passenger);
         booking.setSeatNumber(seatNumber);
 
-        return bookingRepository.save(booking);
+        try {
+            return bookingRepository.save(booking);
+        } catch (DataIntegrityViolationException e) {
+            // ✅ DB unique constraint catches any remaining race conditions
+            throw new RuntimeException("Seat " + seatNumber + " already booked!");
+        }
     }
 
     @Transactional
