@@ -2,64 +2,52 @@
 
 <div align="center">
 
-![Java](https://img.shields.io/badge/Java-17+-ED8B00?style=for-the-badge&logo=java&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
+![Java](https://img.shields.io/badge/Java-17+-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![Spring Security](https://img.shields.io/badge/Spring_Security-JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Deployed-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Swagger](https://img.shields.io/badge/Swagger-Documented-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
 ![Render](https://img.shields.io/badge/Render-Live-46E3B7?style=for-the-badge&logo=render&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-Secured-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 
-**A real-world backend system that automatically notifies passengers when their flight is delayed or cancelled — with real email alerts.**
+**Event-driven Spring Boot API — flight delayed? Every booked passenger gets a real email automatically.**
 
-[Live Backend](https://flight-delay-alert-api.onrender.com/flights) · [Live Frontend](https://flight-delay-frontend-seven.vercel.app) · [Report Bug](https://github.com/sharmakhushi18/flight-delay-alert-api/issues)
+[Live Frontend](https://flight-delay-frontend-seven.vercel.app) · [API Docs (Swagger)](https://flight-delay-alert-api.onrender.com/swagger-ui/index.html) · [Backend API](https://flight-delay-alert-api.onrender.com/flights)
 
 </div>
 
 ---
 
-## 🌐 Live Demo
+## 🌐 Live
 
 | Service | URL |
 |---|---|
-| Backend API | https://flight-delay-alert-api.onrender.com/flights |
 | Frontend Dashboard | https://flight-delay-frontend-seven.vercel.app |
+| Backend API | https://flight-delay-alert-api.onrender.com/flights |
+| Swagger UI (API Docs) | https://flight-delay-alert-api.onrender.com/swagger-ui/index.html |
 
 ---
 
 ## 📌 What Is This?
 
-A Spring Boot REST API that automatically generates passenger alerts and sends real email notifications when a flight status changes to `DELAYED` or `CANCELLED` — no manual intervention required. Built to simulate how real airline notification systems work internally.
+A Spring Boot REST API that automatically generates passenger alerts and sends real email notifications when a flight status changes to `DELAYED` or `CANCELLED` — no manual intervention required.
 
-Now secured with **JWT Authentication** — all endpoints are protected and require a valid token.
-
----
-
-## 💡 Why I Built This
-
-Flight delays affect millions of passengers every day — but most airlines still rely on manual announcements or delayed SMS updates.
-
-I wanted to build a system that **automatically detects status changes and instantly notifies every affected passenger** — no manual work, no delay in communication.
-
-This project taught me how real-world **event-driven systems** work — where one action (status update) triggers a chain of automated responses (alert generation + real email notifications for all booked passengers).
+Secured with **JWT Authentication** — all write endpoints are protected. All APIs are documented with **Swagger UI** — testable directly in the browser.
 
 ---
 
 ## 🚀 What This Project Does
 
-When a flight status changes to `DELAYED` or `CANCELLED`, the system automatically:
-1. Generates alert notifications in DB for all booked passengers
-2. Sends real email notifications to each passenger instantly
-
 ```
-Admin updates flight status
+Admin updates flight status to DELAYED / CANCELLED
         ↓
-System detects DELAYED / CANCELLED
+System detects the change
         ↓
 Alerts auto-generated for all booked passengers
         ↓
 Real email sent to each passenger instantly
         ↓
-Passengers can check their alerts anytime
+Passengers check their alerts anytime via API
 ```
 
 ---
@@ -68,15 +56,14 @@ Passengers can check their alerts anytime
 
 | Technology | Usage |
 |---|---|
-| Java 17+ | Core language |
+| Java 17 | Core language |
 | Spring Boot 3.5 | Backend framework |
-| Spring Security + JWT | Authentication & Authorization |
-| Spring Data JPA | Database ORM |
-| PostgreSQL (Neon) | Cloud relational database |
-| Hibernate | ORM implementation |
-| JavaMailSender | Real email notifications |
+| Spring Security + JWT | Stateless authentication & authorization |
+| Spring Data JPA + Hibernate | Database ORM |
+| PostgreSQL (Neon Cloud) | Relational database |
+| JavaMailSender | Real email notifications via Gmail SMTP |
+| Springdoc OpenAPI (Swagger) | Interactive API documentation |
 | Lombok | Boilerplate reduction |
-| Maven | Build tool |
 | Docker | Containerization |
 | Render | Cloud deployment |
 
@@ -85,24 +72,18 @@ Passengers can check their alerts anytime
 ## 📐 Architecture
 
 ```
-Client (Postman / Frontend)
+Client (Browser / Postman)
         ↓
-   JWT Filter              ← Token validation on every request
+   JWT Filter              ← Token validated on every protected request
         ↓
-   Controller Layer        ← HTTP request handling
+   Controller Layer        ← HTTP only, no business logic
         ↓
-   Service Layer           ← Business logic & validation
+   Service Layer           ← All business rules and decisions
         ↓
-   Repository Layer        ← Database operations (JPA)
+   Repository Layer        ← Database operations (Spring Data JPA)
         ↓
-   PostgreSQL Database     ← Persistent storage (Neon Cloud)
+   PostgreSQL (Neon)       ← Persistent storage
 ```
-
-**Each layer has a single responsibility:**
-- JWT Filter validates token before request reaches controller
-- Controller handles HTTP only — no business logic
-- Service handles all decisions and rules
-- Repository handles all database queries
 
 ---
 
@@ -111,7 +92,7 @@ Client (Postman / Frontend)
 ```
 users
 ├── id, username (unique)
-├── password (BCrypt encrypted)
+├── password (BCrypt hashed)
 └── role (USER / ADMIN)
 
 flights
@@ -125,13 +106,14 @@ passengers
 ├── phone, passportNumber (unique)
 
 bookings
-├── id, seatNumber, status (CONFIRMED / CANCELLED / COMPLETED)
-├── bookingTime (auto-set)
+├── id, seatNumber, bookingTime (auto-set)
+├── status (CONFIRMED / CANCELLED / COMPLETED)
 ├── flight_id (FK), passenger_id (FK)
+└── UNIQUE constraint on (flight_id, seatNumber) ← prevents double booking
 
 alert_notifications
-├── id, message, triggerStatus, alertTime (auto-set)
-├── isRead
+├── id, message, triggerStatus
+├── alertTime (auto-set), isRead
 ├── flight_id (FK), passenger_id (FK)
 ```
 
@@ -146,8 +128,8 @@ ON_TIME  ──→ CANCELLED
 DELAYED  ──→ BOARDING
 DELAYED  ──→ CANCELLED
 BOARDING ──→ DEPARTED
-DEPARTED ──→ ❌ (terminal state)
-CANCELLED──→ ❌ (terminal state)
+DEPARTED ──→ ❌ terminal
+CANCELLED──→ ❌ terminal
 ```
 
 Invalid transitions are rejected at the service layer — the system never enters an inconsistent state.
@@ -160,90 +142,53 @@ Invalid transitions are rejected at the service layer — the system never enter
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | /auth/register | Register a new user |
-| POST | /auth/login | Login and get JWT token |
+| POST | /auth/login | Login — returns JWT token |
 
-### Flights (Protected — Token Required)
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | /flights | Add a new flight |
-| GET | /flights | Get all flights |
-| GET | /flights/{id}/status | Get flight status |
-| PUT | /flights/{id}/status | Update flight status |
+### Flights
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | /flights | Public | Get all flights |
+| GET | /flights/{id}/status | Public | Get flight status |
+| POST | /flights | 🔒 Token | Add a new flight |
+| PUT | /flights/{id}/status | 🔒 Token | Update status — triggers alerts + email |
 
-### Passengers (Protected — Token Required)
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | /passengers | Register a passenger |
-| GET | /passengers | Get all passengers |
+### Passengers
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | /passengers | 🔒 Token | Get all passengers |
+| POST | /passengers | 🔒 Token | Register a passenger |
 
-### Bookings (Protected — Token Required)
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | /bookings | Book a flight |
-| PUT | /bookings/{id}/cancel | Cancel a booking |
-| GET | /bookings/passenger/{id} | Get passenger bookings |
+### Bookings
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | /bookings | 🔒 Token | Book a flight |
+| PUT | /bookings/{id}/cancel | 🔒 Token | Cancel a booking |
+| GET | /bookings/passenger/{id} | 🔒 Token | Get passenger bookings |
 
-### Alerts (Protected — Token Required)
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | /alerts/{passengerId} | Get passenger alerts |
+### Alerts
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | /alerts/{passengerId} | Public | Get passenger alerts |
+
+> All protected endpoints require: `Authorization: Bearer <token>`
 
 ---
 
-## 📬 Sample API Requests
+## 📬 Sample Requests
 
-**Step 1 — Register**
-```json
+**Register & Login**
+```bash
 POST /auth/register
-{
-  "username": "khushi",
-  "password": "khushi123"
-}
-```
+{ "username": "khushi", "password": "khushi123" }
 
-**Step 2 — Login (get token)**
-```json
 POST /auth/login
-{
-  "username": "khushi",
-  "password": "khushi123"
-}
-```
-Response:
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiJ9..."
-}
+{ "username": "khushi", "password": "khushi123" }
+# Response: { "token": "eyJhbGci..." }
 ```
 
-**Step 3 — Use token in all requests**
+**Use token**
 ```
-Authorization: Bearer <your_token>
-```
-
-**Create Flight**
-```json
-POST /flights
-{
-  "flightNumber": "AI101",
-  "source": "Delhi",
-  "destination": "Mumbai",
-  "departureTime": "2026-03-10T10:30:00",
-  "totalSeats": 100,
-  "availableSeats": 100,
-  "status": "ON_TIME",
-  "delayMinutes": 0
-}
-```
-
-**Book a Flight**
-```json
-POST /bookings
-{
-  "flightId": 1,
-  "passengerId": 1,
-  "seatNumber": "A1"
-}
+Authorization: Bearer eyJhbGci...
 ```
 
 **Update Flight Status — triggers alerts + email automatically**
@@ -259,70 +204,76 @@ PUT /flights/1/status
 
 ## ⚙️ How to Run Locally
 
-**Prerequisites**
-- Java 17+
-- PostgreSQL or Neon DB account
-- Maven
-
-**Steps**
+**Prerequisites:** Java 17+, PostgreSQL or Neon DB, Maven
 
 ```bash
-# 1. Clone the repository
+# 1. Clone
 git clone https://github.com/sharmakhushi18/flight-delay-alert-api.git
 
 # 2. Set environment variables in application.properties
 SPRING_DATASOURCE_URL=your_postgresql_url
-SPRING_DATASOURCE_USERNAME=your_username
-SPRING_DATASOURCE_PASSWORD=your_password
+SPRING_DATASOURCE_USERNAME=your_db_username
+SPRING_DATASOURCE_PASSWORD=your_db_password
 SPRING_MAIL_USERNAME=your_gmail
 SPRING_MAIL_PASSWORD=your_gmail_app_password
-JWT_SECRET=your_secret_key
+JWT_SECRET=your_secret_key_min_32_chars
 JWT_EXPIRATION=86400000
 
-# 3. Run the application
+# 3. Run
 mvn spring-boot:run
 ```
 
-Server starts at: `http://localhost:8080`
+Server: `http://localhost:8080`  
+Swagger: `http://localhost:8080/swagger-ui/index.html`
 
 ---
 
 ## 💡 Key Design Decisions
 
-**Why JWT Authentication?**
-Stateless authentication — no session stored on server. Every request carries a self-contained token with user identity and role. Perfect for REST APIs and scalable deployments.
+**Why JWT?**
+Stateless auth — no server-side session. Token carries identity and role. Scales horizontally without sticky sessions.
 
-**Why BCrypt for passwords?**
-BCrypt is a one-way hash — passwords are never stored in plain text. Even if the database is compromised, passwords remain secure.
+**Why pessimistic locking on seat booking?**
+Two users booking the same seat simultaneously would both see it available and both succeed — causing double booking. Pessimistic lock ensures only one transaction proceeds at a time. DB unique constraint on `(flight_id, seatNumber)` is the final safety net.
 
 **Why `@Transactional` on status update?**
-Status change and alert generation must all succeed together — or rollback together. This ensures data consistency even if the server crashes mid-operation.
+Status change and alert generation must succeed or fail together. Partial state — status updated but alerts not generated — is never acceptable.
 
-**Why Enum for FlightStatus?**
-Prevents invalid string values at compile time. The state machine logic becomes clean and readable — invalid transitions are caught before they reach the database.
+**Why state machine for FlightStatus?**
+Prevents invalid transitions at compile time and runtime. A `DEPARTED` flight can never be moved back to `ON_TIME`. Enum makes the logic explicit and testable.
 
-**Why auto-trigger alerts + email?**
-Alerts and emails are side effects of status change — not separate manual steps. This reflects real-world event-driven behavior where one action automatically triggers downstream effects.
+**Why try-catch around email?**
+Email delivery is not guaranteed — SMTP can fail. Alert persistence to DB must succeed regardless. The alert record is the source of truth; email is a side effect.
 
-**Why try-catch around email sending?**
-Email failure should never prevent alert from being saved in DB. Alert persistence is guaranteed even if SMTP fails temporarily.
+**Why DB-level unique constraints?**
+Application-level checks have race conditions. Two simultaneous requests can both pass the check before either commits. Only the database constraint guarantees correctness.
 
-**Why unique constraints on flightNumber, email, passport?**
-Duplicate prevention must happen at the database level — not just the application level. If two requests arrive simultaneously, only the database constraint guarantees one will fail cleanly.
-
----
-
-## 🔮 Future Improvements
-
-- [x] ~~JWT Authentication — secure all endpoints with role-based access~~ ✅ **Completed**
-- [ ] WebSocket Support — push real-time alerts to frontend without polling
-- [ ] Pagination — add pagination to all list endpoints for large datasets
-- [ ] Swagger UI — interactive API documentation for easier testing
-- [ ] Rate Limiting — prevent API abuse with Redis-based request throttling
+**Why BCrypt?**
+Passwords are never stored in plain text. BCrypt is slow by design — making brute force attacks expensive.
 
 ---
 
-## 📸 API Screenshots
+## ✅ Features Completed
+
+- [x] JWT Authentication + Spring Security
+- [x] Event-driven email alerts on status change
+- [x] Pessimistic locking — concurrent booking safety
+- [x] DB unique constraint on `(flight_id, seatNumber)`
+- [x] State machine — invalid transitions rejected
+- [x] `@Transactional` — atomic status + alert creation
+- [x] Swagger UI — interactive API documentation
+- [x] Docker + Render deployment
+- [x] Input validation with Bean Validation API
+
+## 🔮 Planned
+
+- [ ] WebSocket — real-time push alerts without polling
+- [ ] Pagination — for large flight/passenger datasets
+- [ ] Rate limiting — Redis-based request throttling
+
+---
+
+## 📸 Screenshots
 
 **Create Flight**
 ![Create Flight](create-flight.png)
@@ -347,7 +298,8 @@ Duplicate prevention must happen at the database level — not just the applicat
 ## 👩‍💻 Author
 
 **Khushi Sharma**
-Full Stack Developer | Java + React
+Java Backend Developer | Spring Boot · PostgreSQL · React
 Final Year ECE · LNCT Bhopal
 
 [![GitHub](https://img.shields.io/badge/GitHub-sharmakhushi18-181717?style=flat&logo=github)](https://github.com/sharmakhushi18)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-khushissharma-0077B5?style=flat&logo=linkedin)](https://www.linkedin.com/in/khushissharma)
