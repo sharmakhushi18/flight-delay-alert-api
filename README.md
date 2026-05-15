@@ -1,53 +1,54 @@
 # ✈️ SkyTrack — Flight Delay Alert API
 
-<div align="center">
+![Java](https://img.shields.io/badge/Java-17-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-blue)
+![JWT](https://img.shields.io/badge/JWT-Auth-red)
+![Docker](https://img.shields.io/badge/Docker-Deployed-blue)
+![Swagger](https://img.shields.io/badge/Swagger-UI-85EA2D)
 
-![Java](https://img.shields.io/badge/Java-17+-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
-![Spring Security](https://img.shields.io/badge/Spring_Security-JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Deployed-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Swagger](https://img.shields.io/badge/Swagger-Documented-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
-![Render](https://img.shields.io/badge/Render-Live-46E3B7?style=for-the-badge&logo=render&logoColor=white)
+Event-driven Spring Boot API — flight delayed? Every booked passenger gets a real email automatically.
 
-**Event-driven Spring Boot API — flight delayed? Every booked passenger gets a real email automatically.**
-
-[Live Frontend](https://flight-delay-frontend-seven.vercel.app) · [API Docs (Swagger)](https://flight-delay-alert-api.onrender.com/swagger-ui/index.html) · [Backend API](https://flight-delay-alert-api.onrender.com/flights)
-
-</div>
+[Live Frontend](https://flight-delay-frontend-seven.vercel.app) · [Swagger UI](https://flight-delay-alert-api.onrender.com/swagger-ui/index.html) · [Backend API](https://flight-delay-alert-api.onrender.com/flights)
 
 ---
 
 ## 🌐 Live
 
 | Service | URL |
-|---|---|
+|---------|-----|
 | Frontend Dashboard | https://flight-delay-frontend-seven.vercel.app |
 | Backend API | https://flight-delay-alert-api.onrender.com/flights |
-| Swagger UI (API Docs) | https://flight-delay-alert-api.onrender.com/swagger-ui/index.html |
+| Swagger UI | https://flight-delay-alert-api.onrender.com/swagger-ui/index.html |
+
+> ⚠️ Hosted on Render free tier — first request may take 30–50s to cold start.
 
 ---
 
 ## 📌 What Is This?
 
-A Spring Boot REST API that automatically generates passenger alerts and sends real email notifications when a flight status changes to `DELAYED` or `CANCELLED` — no manual intervention required.
+A Spring Boot REST API that automatically generates passenger alerts and sends real email notifications when a flight status changes to DELAYED or CANCELLED — no manual intervention required.
 
-Secured with **JWT Authentication** — all write endpoints are protected. All APIs are documented with **Swagger UI** — testable directly in the browser.
+Core engineering focus: **event-driven consistency** — status update, alert generation, and email dispatch must behave correctly under concurrency, partial failures, and invalid state transitions.
+
+Secured with JWT Authentication. All write endpoints are protected. All APIs documented via Swagger UI — testable directly in the browser.
 
 ---
 
-## 🚀 What This Project Does
+## 🚀 How It Works
 
 ```
-Admin updates flight status to DELAYED / CANCELLED
+Admin updates flight status → DELAYED / CANCELLED
         ↓
-System detects the change
+State machine validates transition at service layer
+(invalid transition? rejected before any DB write)
         ↓
-Alerts auto-generated for all booked passengers
+@Transactional block — status update + alert generation atomically
+(one fails? both roll back)
         ↓
-Real email sent to each passenger instantly
+Email dispatch in try-catch — SMTP failure never blocks DB write
         ↓
-Passengers check their alerts anytime via API
+Passengers receive real Gmail notification instantly
 ```
 
 ---
@@ -55,15 +56,14 @@ Passengers check their alerts anytime via API
 ## 🛠️ Tech Stack
 
 | Technology | Usage |
-|---|---|
+|------------|-------|
 | Java 17 | Core language |
 | Spring Boot 3.5 | Backend framework |
-| Spring Security + JWT | Stateless authentication & authorization |
-| Spring Data JPA + Hibernate | Database ORM |
+| Spring Security + JWT | Stateless auth & role-based access |
+| Spring Data JPA + Hibernate | ORM |
 | PostgreSQL (Neon Cloud) | Relational database |
-| JavaMailSender | Real email notifications via Gmail SMTP |
+| JavaMailSender | Real Gmail SMTP notifications |
 | Springdoc OpenAPI (Swagger) | Interactive API documentation |
-| Lombok | Boilerplate reduction |
 | Docker | Containerization |
 | Render | Cloud deployment |
 
@@ -76,13 +76,24 @@ Client (Browser / Postman)
         ↓
    JWT Filter              ← Token validated on every protected request
         ↓
-   Controller Layer        ← HTTP only, no business logic
+   Controller Layer        ← HTTP routing only, zero business logic
         ↓
-   Service Layer           ← All business rules and decisions
+   Service Layer           ← State machine, @Transactional, alert logic
         ↓
-   Repository Layer        ← Database operations (Spring Data JPA)
+   Repository Layer        ← Spring Data JPA — DB operations
         ↓
    PostgreSQL (Neon)       ← Persistent storage
+```
+
+**Event flow on status change:**
+```
+PUT /flights/{id}/status
+        ↓
+State machine validates: is DELAYED → BOARDING a valid transition?
+        ↓ (valid)
+@Transactional: update flight status + generate alerts for all passengers
+        ↓
+try-catch: send Gmail email per passenger (SMTP failure isolated)
 ```
 
 ---
@@ -103,13 +114,13 @@ flights
 
 passengers
 ├── id, name, email (unique)
-├── phone, passportNumber (unique)
+└── phone, passportNumber (unique)
 
 bookings
 ├── id, seatNumber, bookingTime (auto-set)
 ├── status (CONFIRMED / CANCELLED / COMPLETED)
 ├── flight_id (FK), passenger_id (FK)
-└── UNIQUE constraint on (flight_id, seatNumber) ← prevents double booking
+└── UNIQUE(flight_id, seatNumber) ← prevents double booking at DB level
 
 alert_notifications
 ├── id, message, triggerStatus
@@ -132,7 +143,7 @@ DEPARTED ──→ ❌ terminal
 CANCELLED──→ ❌ terminal
 ```
 
-Invalid transitions are rejected at the service layer — the system never enters an inconsistent state.
+Invalid transitions are rejected at the service layer before any DB write — the system never enters an inconsistent state.
 
 ---
 
@@ -140,13 +151,13 @@ Invalid transitions are rejected at the service layer — the system never enter
 
 ### Authentication (Public)
 | Method | Endpoint | Description |
-|---|---|---|
+|--------|----------|-------------|
 | POST | /auth/register | Register a new user |
 | POST | /auth/login | Login — returns JWT token |
 
 ### Flights
 | Method | Endpoint | Auth | Description |
-|---|---|---|---|
+|--------|----------|------|-------------|
 | GET | /flights | Public | Get all flights |
 | GET | /flights/{id}/status | Public | Get flight status |
 | POST | /flights | 🔒 Token | Add a new flight |
@@ -154,46 +165,44 @@ Invalid transitions are rejected at the service layer — the system never enter
 
 ### Passengers
 | Method | Endpoint | Auth | Description |
-|---|---|---|---|
+|--------|----------|------|-------------|
 | GET | /passengers | 🔒 Token | Get all passengers |
 | POST | /passengers | 🔒 Token | Register a passenger |
 
 ### Bookings
 | Method | Endpoint | Auth | Description |
-|---|---|---|---|
+|--------|----------|------|-------------|
 | POST | /bookings | 🔒 Token | Book a flight |
 | PUT | /bookings/{id}/cancel | 🔒 Token | Cancel a booking |
 | GET | /bookings/passenger/{id} | 🔒 Token | Get passenger bookings |
 
 ### Alerts
 | Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| GET | /alerts/{passengerId} | Public | Get passenger alerts |
+|--------|----------|------|-------------|
+| GET | /alerts/{passengerId} | 🔒 Token | Get passenger alerts |
 
 > All protected endpoints require: `Authorization: Bearer <token>`
+> Note: Alert lookup is scoped per passenger ID — production hardening would add ownership validation so passengers can only read their own alerts.
 
 ---
 
 ## 📬 Sample Requests
 
-**Register & Login**
-```bash
+### Register & Login
+```json
 POST /auth/register
 { "username": "khushi", "password": "khushi123" }
 
 POST /auth/login
 { "username": "khushi", "password": "khushi123" }
-# Response: { "token": "eyJhbGci..." }
+// Response: { "token": "eyJhbGci..." }
 ```
 
-**Use token**
-```
-Authorization: Bearer eyJhbGci...
-```
-
-**Update Flight Status — triggers alerts + email automatically**
+### Update Flight Status — triggers alerts + email
 ```json
 PUT /flights/1/status
+Authorization: Bearer eyJhbGci...
+
 {
   "status": "DELAYED",
   "delayMinutes": 45
@@ -221,10 +230,9 @@ JWT_EXPIRATION=86400000
 
 # 3. Run
 mvn spring-boot:run
+# Server: http://localhost:8080
+# Swagger: http://localhost:8080/swagger-ui/index.html
 ```
-
-Server: `http://localhost:8080`  
-Swagger: `http://localhost:8080/swagger-ui/index.html`
 
 ---
 
@@ -234,72 +242,70 @@ Swagger: `http://localhost:8080/swagger-ui/index.html`
 Stateless auth — no server-side session. Token carries identity and role. Scales horizontally without sticky sessions.
 
 **Why pessimistic locking on seat booking?**
-Two users booking the same seat simultaneously would both see it available and both succeed — causing double booking. Pessimistic lock ensures only one transaction proceeds at a time. DB unique constraint on `(flight_id, seatNumber)` is the final safety net.
+Two users booking the same seat simultaneously would both see it available and both succeed — causing double booking. Pessimistic lock ensures only one transaction proceeds at a time. DB unique constraint on `(flight_id, seatNumber)` is the final safety net — application-level checks have race conditions, only the database guarantees correctness.
 
-**Why `@Transactional` on status update?**
-Status change and alert generation must succeed or fail together. Partial state — status updated but alerts not generated — is never acceptable.
-
-**Why state machine for FlightStatus?**
-Prevents invalid transitions at compile time and runtime. A `DEPARTED` flight can never be moved back to `ON_TIME`. Enum makes the logic explicit and testable.
+**Why @Transactional on status update?**
+Status change and alert generation must succeed or fail together. Partial state — status updated but no alerts generated — is never acceptable. `@Transactional` rolls back both if either fails.
 
 **Why try-catch around email?**
-Email delivery is not guaranteed — SMTP can fail. Alert persistence to DB must succeed regardless. The alert record is the source of truth; email is a side effect.
+Email delivery is not guaranteed — SMTP can fail. Alert persistence to DB must succeed regardless. The alert record is the source of truth; email is a side effect. Isolating email in try-catch prevents an SMTP timeout from rolling back the entire status update.
+
+**Why state machine for FlightStatus?**
+Prevents invalid transitions at runtime. A DEPARTED flight can never be moved back to ON_TIME. Enum-based state machine makes valid transitions explicit, auditable, and testable.
 
 **Why DB-level unique constraints?**
-Application-level checks have race conditions. Two simultaneous requests can both pass the check before either commits. Only the database constraint guarantees correctness.
+Application-level uniqueness checks have race conditions — two simultaneous requests can both pass the check before either commits. Only the database constraint guarantees correctness under concurrency.
 
 **Why BCrypt?**
-Passwords are never stored in plain text. BCrypt is slow by design — making brute force attacks expensive.
+Passwords are never stored in plain text. BCrypt is intentionally slow — making brute force attacks computationally expensive even if the DB is compromised.
 
 ---
 
-## ✅ Features Completed
+## ✅ Features
 
 - [x] JWT Authentication + Spring Security
 - [x] Event-driven email alerts on status change
 - [x] Pessimistic locking — concurrent booking safety
 - [x] DB unique constraint on `(flight_id, seatNumber)`
-- [x] State machine — invalid transitions rejected
+- [x] State machine — invalid transitions rejected at service layer
 - [x] `@Transactional` — atomic status + alert creation
-- [x] Swagger UI — interactive API documentation
+- [x] Email isolated in try-catch — SMTP failure never blocks DB write
+- [x] Swagger UI — all endpoints documented and testable
 - [x] Docker + Render deployment
 - [x] Input validation with Bean Validation API
 
-## 🔮 Planned
+---
 
-- [ ] WebSocket — real-time push alerts without polling
-- [ ] Pagination — for large flight/passenger datasets
-- [ ] Rate limiting — Redis-based request throttling
+## 🔮 Roadmap
+
+- WebSocket — real-time push alerts without polling
+- Kafka — async alert processing for high-volume flights
+- Redis rate limiting — prevent status update spam
+- Pagination — for large flight/passenger datasets
+- Ownership check on alerts — passengers read only their own
 
 ---
 
 ## 📸 Screenshots
 
-**Create Flight**
-![Create Flight](create-flight.png)
+| Create Flight | Create Passenger |
+|---|---|
+| ![Create Flight](docs/screenshots/create-flight.png) | ![Create Passenger](docs/screenshots/create-passenger.png) |
 
-**Create Passenger**
-![Create Passenger](create-passenger.png)
+| Create Booking | Get Bookings |
+|---|---|
+| ![Create Booking](docs/screenshots/create-booking.png) | ![Get Bookings](docs/screenshots/get-bookings.png) |
 
-**Create Booking**
-![Create Booking](create-booking.png)
-
-**Get Flights**
-![Get Flights](get-flights.png)
-
-**Get Bookings**
-![Get Bookings](get-bookings.png)
-
-**Update Flight Status**
-![Update Status](update-status.png)
+| Get Flights | Update Status |
+|---|---|
+| ![Get Flights](docs/screenshots/get-flights.png) | ![Update Status](docs/screenshots/update-status.png) |
 
 ---
 
 ## 👩‍💻 Author
 
-**Khushi Sharma**
-Java Backend Developer | Spring Boot · PostgreSQL · React
-Final Year ECE · LNCT Bhopal
+**Khushi Sharma** — Java Backend Developer
+Spring Boot · PostgreSQL · JWT · Docker · Event-driven Systems
+Final Year ECE @ LNCT Bhopal
 
-[![GitHub](https://img.shields.io/badge/GitHub-sharmakhushi18-181717?style=flat&logo=github)](https://github.com/sharmakhushi18)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-khushissharma-0077B5?style=flat&logo=linkedin)](https://www.linkedin.com/in/khushissharma)
+[GitHub](https://github.com/sharmakhushi18) · [LinkedIn](https://www.linkedin.com/in/khushi-sharma-523153259/)
