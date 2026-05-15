@@ -290,15 +290,15 @@ Passwords are never stored in plain text. BCrypt is intentionally slow — makin
 
 | Create Flight | Create Passenger |
 |---|---|
-| ![Create Flight](docs/screenshots/create-flight.png) | ![Create Passenger](docs/screenshots/create-passenger.png) |
+| ![Create Flight](create-flight.png) | ![Create Passenger](create-passenger.png) |
 
 | Create Booking | Get Bookings |
 |---|---|
-| ![Create Booking](docs/screenshots/create-booking.png) | ![Get Bookings](docs/screenshots/get-bookings.png) |
+| ![Create Booking](create-booking.png) | ![Get Bookings](get-bookings.png) |
 
 | Get Flights | Update Status |
 |---|---|
-| ![Get Flights](docs/screenshots/get-flights.png) | ![Update Status](docs/screenshots/update-status.png) |
+| ![Get Flights](get-flights.png) | ![Update Status](update-status.png) |
 
 ---
 
